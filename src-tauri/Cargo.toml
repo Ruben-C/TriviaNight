@@ -1,0 +1,31 @@
+[package]
+name = "trivia-night"
+version = "0.1.0"
+description = "A cross-platform trivia night application"
+authors = ["you"]
+license = "MIT"
+repository = ""
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "trivia_night_lib"
+crate-type = ["staticlib", "cdylib", "lib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-shell = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["full"] }
+tokio-tungstenite = "0.24"
+rusqlite = { version = "0.32", features = ["bundled"] }
+mdns-sd = "0.11"
+
+[[bin]]
+name = "trivia-night"
+path = "src/main.rs"
