@@ -105,12 +105,76 @@ This will start the Vite dev server and launch the Tauri application in developm
 
 ### Building
 
-Build for production:
+**Important**: Before building, you need to generate application icons:
+
+```bash
+# Install Tauri CLI if not already installed
+npm install -g @tauri-apps/cli
+
+# Generate icons from a 1024x1024 PNG image
+cargo tauri icon path/to/your-icon.png
+```
+
+Then build for production:
 ```bash
 npm run tauri:build
 ```
 
 The compiled application will be in `src-tauri/target/release/bundle/`.
+
+**Note**: The build will fail without icons. See `src-tauri/icons/README.md` for more information.
+
+## CI/CD Pipeline
+
+This project uses GitHub Actions for continuous integration and deployment:
+
+### Automated Workflows
+
+1. **Test Workflow** (`test.yml`)
+   - Runs on every push and pull request
+   - Type checks TypeScript code
+   - Builds frontend
+   - Runs Rust tests and clippy checks
+   - Ensures code quality before merging
+
+2. **Build Workflow** (`build.yml`)
+   - Builds for all platforms (Windows, macOS, Linux)
+   - Runs on push to main and pull requests
+   - Creates platform-specific installers:
+     - **macOS**: `.dmg` and `.app`
+     - **Linux**: `.deb` and `.AppImage`
+     - **Windows**: `.msi` and `.exe` (NSIS)
+   - Uploads artifacts for 7 days
+
+3. **Release Workflow** (`release.yml`)
+   - Triggered when a tag is pushed (e.g., `v1.0.0`)
+   - Builds for all platforms
+   - Creates a GitHub release with installers
+   - Generates release notes automatically
+
+### Creating a Release
+
+To create a new release:
+
+```bash
+# Ensure you're on main with latest changes
+git checkout main
+git pull
+
+# Create and push a version tag
+git tag -a v1.0.0 -m "Release version 1.0.0"
+git push origin v1.0.0
+```
+
+The release workflow will automatically:
+- Build for Windows, macOS, and Linux
+- Create installers for each platform
+- Create a draft release on GitHub
+- Attach all installers to the release
+
+### Build Status
+
+Check the Actions tab on GitHub to see build status for all platforms.
 
 ## Project Structure
 
