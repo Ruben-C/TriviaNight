@@ -1,14 +1,30 @@
 # Trivia Night
 
-A cross-platform trivia game application for your next game night. Host and play interactive trivia games with friends on Windows, Mac, and Linux.
+A cross-platform trivia game application for your next game night.
+
+**Host**: Desktop app (Windows, Mac, Linux) for game control and management
+**Players**: Web browser on ANY device - phones, tablets, laptops (iOS, Android, etc.)
+
+## Architecture
+
+- **🖥️ Host Application**: Desktop app (Tauri) for Windows, macOS, and Linux
+  - Manage questions and game settings
+  - Control game flow
+  - View player status and scores
+
+- **📱 Player Interface**: Web-based (works on ANY device)
+  - No installation required
+  - Join via browser: phones, tablets, laptops
+  - iOS, Android, Windows, Mac, Linux - all supported
+  - Just scan QR code or visit URL
 
 ## Features
 
 ### Phase 1 (Current)
 
-- **Cross-Platform**: Runs on Windows, macOS, and Linux
-- **Host Mode**: Create and manage trivia game sessions
-- **Player Mode**: Join games and answer questions
+- **Host Desktop App**: Cross-platform (Windows, macOS, Linux)
+- **Universal Player Access**: Web browser on any device - no app installation needed
+- **Question Management**: Create, edit, and organize questions into sets
 - **Multiple Question Types**:
   - Multiple Choice
   - Text Input
@@ -30,20 +46,33 @@ A cross-platform trivia game application for your next game night. Host and play
 
 ## Technology Stack
 
+### Host Application (Desktop)
+- **Framework**: Tauri 2.0 (Rust + React)
 - **Frontend**: React + TypeScript + Tailwind CSS
-- **Desktop Framework**: Tauri (Rust backend with web frontend)
-- **Database**: SQLite (embedded)
-- **Real-time Communication**: WebSockets (tokio-tungstenite)
-- **Network Discovery**: mDNS
-- **State Management**: Zustand
 - **Build Tool**: Vite
+- **State Management**: Zustand
+
+### Player Interface (Web)
+- **Frontend**: Vanilla JavaScript (lightweight)
+- **Styling**: Tailwind CSS
+- **Communication**: WebSocket API
+- **Size**: < 100KB (fast mobile loading)
+
+### Backend (Rust)
+- **HTTP Server**: Axum (serves player web interface)
+- **WebSocket**: tokio-tungstenite (real-time communication)
+- **Database**: SQLite (embedded, no separate server)
+- **Network Discovery**: mDNS (auto-discovery on local network)
+- **QR Codes**: qrcode crate (easy mobile joining)
 
 ### Why This Stack?
 
 - **Tauri**: ~600KB overhead vs Electron's ~100MB, uses native OS WebView
 - **Rust Backend**: Minimal memory footprint, excellent performance
 - **SQLite**: Embedded database, no separate server needed
-- **Total Memory**: ~150-200MB vs Electron's 600MB+
+- **Web Players**: Universal access from any device, no installation
+- **Total Host Memory**: ~150-200MB vs Electron's 600MB+
+- **Player Requirements**: Just a web browser (any modern device)
 
 ## Prerequisites
 
@@ -180,22 +209,29 @@ Check the Actions tab on GitHub to see build status for all platforms.
 
 ```
 TriviaNight/
-├── src/                      # React frontend source
-│   ├── App.tsx              # Main application component
+├── src/                      # HOST desktop app (React + Tauri)
+│   ├── App.tsx              # Host main interface
 │   ├── main.tsx             # React entry point
 │   ├── index.css            # Global styles with Tailwind
 │   └── types/               # TypeScript type definitions
 │       └── index.ts         # Shared types
-├── src-tauri/               # Tauri/Rust backend
+├── player-web/              # PLAYER web interface (served to browsers)
+│   ├── index.html           # Player entry point
+│   ├── app.js               # Player WebSocket client
+│   ├── styles.css           # Player UI styles
+│   └── assets/              # Images, icons
+├── src-tauri/               # Backend (Rust)
 │   ├── src/
 │   │   ├── main.rs          # Main Tauri application
 │   │   ├── lib.rs           # Library exports
 │   │   ├── database.rs      # SQLite database logic
-│   │   └── server.rs        # WebSocket server
+│   │   └── server.rs        # HTTP + WebSocket server
 │   ├── Cargo.toml           # Rust dependencies
 │   └── tauri.conf.json      # Tauri configuration
-├── public/                  # Static assets
-├── index.html               # HTML entry point
+├── docs/
+│   └── ARCHITECTURE.md      # Detailed architecture documentation
+├── .github/workflows/       # CI/CD pipelines
+├── index.html               # Host app entry point
 ├── package.json             # Node dependencies
 ├── vite.config.ts           # Vite configuration
 ├── tailwind.config.js       # Tailwind CSS configuration
@@ -204,23 +240,35 @@ TriviaNight/
 
 ## How to Use
 
-### As a Host
+### As a Host (Desktop App)
 
-1. Launch the application
-2. Click "Host Game"
-3. Create or select a question set
-4. Start the game server
-5. Share the game code with players
-6. Control the game flow from the host dashboard
+1. **Install** the Trivia Night desktop app on your computer (Windows, Mac, or Linux)
+2. **Launch** the application
+3. **Create** or select a question set
+4. **Click "Start Server"** to begin hosting
+5. **Display** the connection QR code and URL on your screen
+6. **Wait** for players to join via their browsers
+7. **Start** the game when ready
+8. **Control** the game flow from your dashboard
 
-### As a Player
+### As a Player (Any Device with Browser)
 
-1. Launch the application
-2. Click "Join Game"
-3. Enter the game code provided by the host
-4. Enter your name
-5. Wait for the game to start
-6. Answer questions and compete!
+**No installation required!** Just use your web browser:
+
+1. **Open** your browser on any device (phone, tablet, laptop)
+2. **Scan** the QR code shown by the host, OR
+3. **Type** the URL shown (e.g., `http://192.168.1.100:3000`)
+4. **Enter** your name
+5. **Wait** for the host to start the game
+6. **Answer** questions on your device
+7. **Compete** and see your score in real-time!
+
+**Supported Devices:**
+- 📱 iPhone/iPad (Safari, Chrome)
+- 📱 Android phones/tablets (Chrome, Firefox, etc.)
+- 💻 Windows laptops (Edge, Chrome, Firefox)
+- 💻 Mac laptops (Safari, Chrome)
+- 🖥️ Any device with a modern web browser
 
 ## Development Roadmap
 
