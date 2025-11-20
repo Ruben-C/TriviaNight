@@ -90,7 +90,7 @@ async fn game_status(State(game_state): State<Arc<RwLock<GameState>>>) -> impl I
 /// QR code generation endpoint
 async fn qr_code() -> impl IntoResponse {
     use qrcode::QrCode;
-    use image::Lrgb;
+    use image::{ImageEncoder, Rgb};
 
     // Get local IP address
     let local_ip = match local_ip_address::local_ip() {
@@ -105,19 +105,20 @@ async fn qr_code() -> impl IntoResponse {
     match QrCode::new(url.as_bytes()) {
         Ok(code) => {
             // Render as PNG image
-            let image = code.render::<Lrgb>()
+            let image = code.render::<Rgb<u8>>()
                 .max_dimensions(512, 512)
                 .build();
 
             // Convert to PNG bytes
             let mut png_bytes = Vec::new();
-            if let Ok(_) = image::codecs::png::PngEncoder::new(&mut png_bytes)
+            if image::codecs::png::PngEncoder::new(&mut png_bytes)
                 .write_image(
                     image.as_raw(),
                     image.width(),
                     image.height(),
-                    image::ColorType::Rgb8,
+                    image::ExtendedColorType::Rgb8,
                 )
+                .is_ok()
             {
                 (
                     StatusCode::OK,

@@ -245,7 +245,7 @@ pub async fn handle_socket(socket: WebSocket, game_state: Arc<RwLock<GameState>>
                                 );
 
                                 // Validate answer against current question
-                                if let Some(current_q) = &state.current_question {
+                                if let Some(current_q) = state.current_question.clone() {
                                     // Convert WebSocket Question to game_engine format for validation
                                     let game_question = crate::game_engine::Question {
                                         id: current_q.id as i64,
