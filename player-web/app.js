@@ -11,6 +11,8 @@ class TriviaPlayer {
         this.selectedAnswer = null;
         this.hasAnswered = false;
         this.timerInterval = null;
+        this.timeLimit = 30;
+        this.startTime = null;
 
         this.init();
     }
@@ -216,6 +218,7 @@ class TriviaPlayer {
 
     createMultipleChoiceAnswers(options) {
         const answerSection = document.getElementById('answer-section');
+        const submitButton = document.getElementById('submit-answer');
 
         options.forEach((option, index) => {
             const button = document.createElement('div');
@@ -227,6 +230,7 @@ class TriviaPlayer {
                 });
                 button.classList.add('selected');
                 this.selectedAnswer = option;
+                submitButton.disabled = false;
             });
             answerSection.appendChild(button);
         });
@@ -234,6 +238,7 @@ class TriviaPlayer {
 
     createTextInput() {
         const answerSection = document.getElementById('answer-section');
+        const submitButton = document.getElementById('submit-answer');
 
         const input = document.createElement('input');
         input.type = 'text';
@@ -241,9 +246,10 @@ class TriviaPlayer {
         input.placeholder = 'Type your answer...';
         input.addEventListener('input', (e) => {
             this.selectedAnswer = e.target.value;
+            submitButton.disabled = !e.target.value.trim();
         });
         input.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
+            if (e.key === 'Enter' && this.selectedAnswer && this.selectedAnswer.trim()) {
                 this.submitAnswer();
             }
         });
@@ -267,6 +273,8 @@ class TriviaPlayer {
         const timerProgress = document.getElementById('timer-progress');
         const circumference = 2 * Math.PI * 45;
 
+        this.timeLimit = seconds; // Store time limit
+        this.startTime = Date.now(); // Store start time
         let timeLeft = seconds;
         timerText.textContent = timeLeft;
         timerProgress.style.strokeDashoffset = 0;
@@ -294,6 +302,9 @@ class TriviaPlayer {
         this.hasAnswered = true;
         clearInterval(this.timerInterval);
 
+        // Calculate time elapsed (in seconds)
+        const timeElapsed = Math.floor((Date.now() - this.startTime) / 1000);
+
         // Disable submit button
         document.getElementById('submit-answer').disabled = true;
 
@@ -301,7 +312,7 @@ class TriviaPlayer {
         this.sendMessage('player_answer', {
             player_id: this.playerId,
             answer: this.selectedAnswer || '',
-            time_elapsed: parseInt(document.getElementById('timer-text').textContent)
+            time_elapsed: Math.min(timeElapsed, this.timeLimit || 30)
         });
 
         // Show feedback

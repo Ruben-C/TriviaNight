@@ -239,15 +239,24 @@ export default function HostSetup() {
                 </p>
               </div>
 
-              {/* QR Code Placeholder */}
+              {/* QR Code */}
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
                   QR Code
                 </label>
-                <div className="flex justify-center p-8 bg-white/5 border border-white/10 rounded-lg">
-                  <div className="w-48 h-48 bg-white/10 rounded-lg flex items-center justify-center">
+                <div className="flex justify-center p-8 bg-white rounded-lg">
+                  <img
+                    src={`${connectionUrl}/api/game/qr`}
+                    alt="QR Code for player connection"
+                    className="w-64 h-64"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none'
+                      e.currentTarget.nextElementSibling?.classList.remove('hidden')
+                    }}
+                  />
+                  <div className="hidden w-64 h-64 bg-white/10 rounded-lg flex items-center justify-center">
                     <p className="text-gray-400 text-center">
-                      QR Code<br />Coming Soon
+                      QR Code<br />Loading...
                     </p>
                   </div>
                 </div>
@@ -264,9 +273,8 @@ export default function HostSetup() {
                 </h3>
                 <ol className="list-decimal list-inside space-y-2 text-gray-300">
                   <li>Open a web browser on any device (phone, tablet, laptop)</li>
-                  <li>Visit the connection URL shown above, OR</li>
-                  <li>Scan the QR code (when available)</li>
-                  <li>Enter their name and the game code</li>
+                  <li>Visit the connection URL shown above, OR scan the QR code</li>
+                  <li>Enter their name and the game code: <strong className="text-white">{serverInfo.game_code}</strong></li>
                   <li>Wait for you to start the game!</li>
                 </ol>
               </div>

@@ -89,9 +89,55 @@ async fn game_status(State(game_state): State<Arc<RwLock<GameState>>>) -> impl I
 
 /// QR code generation endpoint
 async fn qr_code() -> impl IntoResponse {
-    // TODO: Generate actual QR code
-    // For now, return a placeholder
-    (StatusCode::NOT_IMPLEMENTED, "QR code generation coming soon")
+    use qrcode::QrCode;
+    use image::Lrgb;
+
+    // Get local IP address
+    let local_ip = match local_ip_address::local_ip() {
+        Ok(ip) => ip.to_string(),
+        Err(_) => "localhost".to_string(),
+    };
+
+    // Create connection URL
+    let url = format!("http://{}:3000", local_ip);
+
+    // Generate QR code
+    match QrCode::new(url.as_bytes()) {
+        Ok(code) => {
+            // Render as PNG image
+            let image = code.render::<Lrgb>()
+                .max_dimensions(512, 512)
+                .build();
+
+            // Convert to PNG bytes
+            let mut png_bytes = Vec::new();
+            if let Ok(_) = image::codecs::png::PngEncoder::new(&mut png_bytes)
+                .write_image(
+                    image.as_raw(),
+                    image.width(),
+                    image.height(),
+                    image::ColorType::Rgb8,
+                )
+            {
+                (
+                    StatusCode::OK,
+                    [(header::CONTENT_TYPE, "image/png")],
+                    png_bytes,
+                )
+            } else {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    [(header::CONTENT_TYPE, "image/png")],
+                    Vec::new(),
+                )
+            }
+        }
+        Err(_) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            [(header::CONTENT_TYPE, "image/png")],
+            Vec::new(),
+        ),
+    }
 }
 
 /// Serve player web interface index.html

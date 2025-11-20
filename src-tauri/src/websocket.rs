@@ -282,6 +282,10 @@ pub async fn handle_socket(socket: WebSocket, game_state: Arc<RwLock<GameState>>
                                                 },
                                             )
                                             .await;
+
+                                        // Broadcast updated scores to all players
+                                        let scores = state.get_scores();
+                                        state.broadcast(GameMessage::ScoreUpdate { players: scores }).await;
                                     }
                                 } else {
                                     // No current question
