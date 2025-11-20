@@ -28,9 +28,11 @@ mdns-sd = "0.11"
 axum = { version = "0.7", features = ["ws"] }
 tower = "0.4"
 tower-http = { version = "0.5", features = ["fs", "cors"] }
-uuid = { version = "1.7", features = ["v4"] }
+uuid = { version = "1.7", features = ["v4", "serde"] }
 qrcode = "0.14"
 image = "0.25"
+futures = "0.3"
+rand = "0.8"
 
 [[bin]]
 name = "trivia-night"
