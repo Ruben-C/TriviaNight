@@ -97,14 +97,14 @@ async fn qr_code() -> impl IntoResponse {
 /// Serve player web interface index.html
 async fn serve_index() -> impl IntoResponse {
     // Embed the HTML file directly into the binary
-    const INDEX_HTML: &str = include_str!("../../../player-web/index.html");
+    const INDEX_HTML: &str = include_str!("../../player-web/index.html");
     Html(INDEX_HTML)
 }
 
 /// Serve player web interface styles.css
 async fn serve_styles() -> impl IntoResponse {
     // Embed the CSS file directly into the binary
-    const STYLES_CSS: &str = include_str!("../../../player-web/styles.css");
+    const STYLES_CSS: &str = include_str!("../../player-web/styles.css");
     (
         StatusCode::OK,
         [(header::CONTENT_TYPE, "text/css")],
@@ -115,7 +115,7 @@ async fn serve_styles() -> impl IntoResponse {
 /// Serve player web interface app.js
 async fn serve_app_js() -> impl IntoResponse {
     // Embed the JS file directly into the binary
-    const APP_JS: &str = include_str!("../../../player-web/app.js");
+    const APP_JS: &str = include_str!("../../player-web/app.js");
     (
         StatusCode::OK,
         [(header::CONTENT_TYPE, "application/javascript")],
