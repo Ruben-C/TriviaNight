@@ -63,6 +63,7 @@ pub struct Question {
     pub question_type: String,
     pub options: Option<Vec<String>>,
     pub image_url: Option<String>,
+    pub correct_answer: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -243,19 +244,56 @@ pub async fn handle_socket(socket: WebSocket, game_state: Arc<RwLock<GameState>>
                                     player_id, answer, time_elapsed
                                 );
 
-                                // TODO: Validate answer and calculate score
-                                // For now, just send a dummy response
-                                state
-                                    .send_to_player(
-                                        &player_id,
-                                        GameMessage::AnswerResult {
-                                            is_correct: true,
-                                            points_earned: 100,
-                                            current_score: 100,
-                                            correct_answer: None,
-                                        },
-                                    )
-                                    .await;
+                                // Validate answer against current question
+                                if let Some(current_q) = &state.current_question {
+                                    // Convert WebSocket Question to game_engine format for validation
+                                    let game_question = crate::game_engine::Question {
+                                        id: current_q.id as i64,
+                                        question_text: current_q.text.clone(),
+                                        question_type: current_q.question_type.clone(),
+                                        correct_answer: current_q.correct_answer.clone(),
+                                        options: current_q.options.clone(),
+                                        image_url: current_q.image_url.clone(),
+                                        difficulty: "medium".to_string(),
+                                        category: "General".to_string(),
+                                    };
+
+                                    // Use game engine to check answer
+                                    let is_correct = crate::game_engine::check_answer(&game_question, &answer);
+
+                                    // Calculate points based on correctness and time
+                                    let time_limit = 30; // Default time limit
+                                    let points = crate::game_engine::calculate_points(is_correct, time_elapsed, time_limit);
+
+                                    // Update player score
+                                    if let Some(player) = state.players.get_mut(&player_id) {
+                                        player.score += points;
+                                        let current_score = player.score;
+
+                                        // Send result to player
+                                        state
+                                            .send_to_player(
+                                                &player_id,
+                                                GameMessage::AnswerResult {
+                                                    is_correct,
+                                                    points_earned: points,
+                                                    current_score,
+                                                    correct_answer: Some(current_q.correct_answer.clone()),
+                                                },
+                                            )
+                                            .await;
+                                    }
+                                } else {
+                                    // No current question
+                                    state
+                                        .send_to_player(
+                                            &player_id,
+                                            GameMessage::Error {
+                                                message: "No active question".to_string(),
+                                            },
+                                        )
+                                        .await;
+                                }
                             }
 
                             _ => {

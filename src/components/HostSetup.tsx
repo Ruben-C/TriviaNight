@@ -1,8 +1,13 @@
 import { useState, useEffect } from 'react'
 import { startServer, stopServer, getServerInfo, getLocalIp } from '../api/tauri'
 import type { ServerInfo } from '../api/tauri'
+import QuestionManager from './QuestionManager'
+import GameDashboard from './GameDashboard'
+
+type HostTab = 'setup' | 'questions' | 'dashboard'
 
 export default function HostSetup() {
+  const [activeTab, setActiveTab] = useState<HostTab>('setup')
   const [serverInfo, setServerInfo] = useState<ServerInfo>({
     is_running: false,
     port: null,
@@ -71,13 +76,53 @@ export default function HostSetup() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <h1 className="text-5xl font-bold text-center mb-4 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
           Trivia Night Host
         </h1>
-        <p className="text-xl text-center text-gray-300 mb-12">
+        <p className="text-xl text-center text-gray-300 mb-8">
           Control Panel
         </p>
+
+        {/* Tabs */}
+        <div className="flex gap-2 mb-6">
+          <button
+            onClick={() => setActiveTab('setup')}
+            className={`flex-1 px-6 py-3 rounded-lg font-bold transition-all ${
+              activeTab === 'setup'
+                ? 'bg-blue-600 text-white'
+                : 'bg-white/10 text-gray-300 hover:bg-white/20'
+            }`}
+          >
+            Server Setup
+          </button>
+          <button
+            onClick={() => setActiveTab('questions')}
+            className={`flex-1 px-6 py-3 rounded-lg font-bold transition-all ${
+              activeTab === 'questions'
+                ? 'bg-blue-600 text-white'
+                : 'bg-white/10 text-gray-300 hover:bg-white/20'
+            }`}
+          >
+            Questions
+          </button>
+          <button
+            onClick={() => setActiveTab('dashboard')}
+            className={`flex-1 px-6 py-3 rounded-lg font-bold transition-all ${
+              activeTab === 'dashboard'
+                ? 'bg-blue-600 text-white'
+                : 'bg-white/10 text-gray-300 hover:bg-white/20'
+            }`}
+            disabled={!serverInfo.is_running}
+          >
+            Game Dashboard
+            {!serverInfo.is_running && <span className="text-xs ml-2">(Start server first)</span>}
+          </button>
+        </div>
+
+        {/* Tab Content */}
+        {activeTab === 'setup' && (
+          <div>
 
         {/* Server Controls */}
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 mb-6 border border-white/10">
@@ -227,6 +272,16 @@ export default function HostSetup() {
               </div>
             </div>
           </div>
+        )}
+          </div>
+        )}
+
+        {activeTab === 'questions' && (
+          <QuestionManager />
+        )}
+
+        {activeTab === 'dashboard' && (
+          <GameDashboard />
         )}
       </div>
     </div>
