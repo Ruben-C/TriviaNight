@@ -9,7 +9,6 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use tower_http::cors::CorsLayer;
-use tower_http::services::ServeDir;
 
 use crate::websocket::{handle_socket, GameState};
 
@@ -53,12 +52,10 @@ impl TriviaServer {
             .route("/api/health", get(health_check))
             .route("/api/game/status", get(game_status))
             .route("/api/game/qr", get(qr_code))
-            // Serve player web interface files
+            // Serve player web interface files (embedded in binary)
             .route("/", get(serve_index))
             .route("/styles.css", get(serve_styles))
             .route("/app.js", get(serve_app_js))
-            // Fallback to serve other assets
-            .nest_service("/assets", ServeDir::new("player-web/assets"))
             // Add CORS for local development
             .layer(CorsLayer::permissive())
             // Share game state across handlers
@@ -99,48 +96,31 @@ async fn qr_code() -> impl IntoResponse {
 
 /// Serve player web interface index.html
 async fn serve_index() -> impl IntoResponse {
-    match tokio::fs::read_to_string("player-web/index.html").await {
-        Ok(content) => Html(content).into_response(),
-        Err(_) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "Failed to load player interface",
-        )
-            .into_response(),
-    }
+    // Embed the HTML file directly into the binary
+    const INDEX_HTML: &str = include_str!("../../../player-web/index.html");
+    Html(INDEX_HTML)
 }
 
 /// Serve player web interface styles.css
 async fn serve_styles() -> impl IntoResponse {
-    match tokio::fs::read_to_string("player-web/styles.css").await {
-        Ok(content) => (
-            StatusCode::OK,
-            [(header::CONTENT_TYPE, "text/css")],
-            content,
-        )
-            .into_response(),
-        Err(_) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "Failed to load styles",
-        )
-            .into_response(),
-    }
+    // Embed the CSS file directly into the binary
+    const STYLES_CSS: &str = include_str!("../../../player-web/styles.css");
+    (
+        StatusCode::OK,
+        [(header::CONTENT_TYPE, "text/css")],
+        STYLES_CSS,
+    )
 }
 
 /// Serve player web interface app.js
 async fn serve_app_js() -> impl IntoResponse {
-    match tokio::fs::read_to_string("player-web/app.js").await {
-        Ok(content) => (
-            StatusCode::OK,
-            [(header::CONTENT_TYPE, "application/javascript")],
-            content,
-        )
-            .into_response(),
-        Err(_) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            "Failed to load app script",
-        )
-            .into_response(),
-    }
+    // Embed the JS file directly into the binary
+    const APP_JS: &str = include_str!("../../../player-web/app.js");
+    (
+        StatusCode::OK,
+        [(header::CONTENT_TYPE, "application/javascript")],
+        APP_JS,
+    )
 }
 
 #[cfg(test)]
