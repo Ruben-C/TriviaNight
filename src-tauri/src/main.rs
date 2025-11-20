@@ -5,7 +5,9 @@ mod database;
 mod server;
 mod http_server;
 mod websocket;
+mod game_engine;
 
+use std::path::PathBuf;
 use std::sync::Arc;
 use tauri::{Manager, State};
 use tokio::sync::{Mutex, RwLock};
@@ -17,6 +19,11 @@ struct ServerState {
     handle: Mutex<Option<tokio::task::JoinHandle<()>>>,
     port: Mutex<Option<u16>>,
     game_code: RwLock<Option<String>>,
+}
+
+/// Application state
+struct AppState {
+    db_path: PathBuf,
 }
 
 impl ServerState {
@@ -43,8 +50,11 @@ fn main() {
                 Err(e) => eprintln!("Failed to initialize database: {}", e),
             }
 
-            // Initialize server state
+            // Initialize state
             app.manage(ServerState::new());
+            app.manage(AppState {
+                db_path: db_path.clone(),
+            });
 
             Ok(())
         })
@@ -54,7 +64,12 @@ fn main() {
             stop_server,
             get_server_status,
             get_server_info,
-            get_local_ip
+            get_local_ip,
+            get_all_questions,
+            get_all_question_sets,
+            get_questions_in_set,
+            create_question,
+            create_question_set
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -143,4 +158,61 @@ fn get_local_ip() -> Result<String, String> {
     let addr = socket.local_addr().map_err(|e| e.to_string())?;
 
     Ok(addr.ip().to_string())
+}
+
+// Question Management Commands
+
+#[tauri::command]
+fn get_all_questions(app_state: State<'_, AppState>) -> Result<Vec<game_engine::Question>, String> {
+    game_engine::get_all_questions(&app_state.db_path)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn get_all_question_sets(app_state: State<'_, AppState>) -> Result<Vec<game_engine::QuestionSet>, String> {
+    game_engine::get_all_question_sets(&app_state.db_path)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn get_questions_in_set(
+    app_state: State<'_, AppState>,
+    set_id: i64,
+) -> Result<Vec<game_engine::Question>, String> {
+    game_engine::get_questions_in_set(&app_state.db_path, set_id)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn create_question(
+    app_state: State<'_, AppState>,
+    question_text: String,
+    question_type: String,
+    correct_answer: String,
+    options: Option<Vec<String>>,
+    image_url: Option<String>,
+    difficulty: String,
+    category: String,
+) -> Result<i64, String> {
+    game_engine::create_question(
+        &app_state.db_path,
+        &question_text,
+        &question_type,
+        &correct_answer,
+        options,
+        image_url.as_deref(),
+        &difficulty,
+        &category,
+    )
+    .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn create_question_set(
+    app_state: State<'_, AppState>,
+    name: String,
+    description: String,
+) -> Result<i64, String> {
+    game_engine::create_question_set(&app_state.db_path, &name, &description)
+        .map_err(|e| e.to_string())
 }
