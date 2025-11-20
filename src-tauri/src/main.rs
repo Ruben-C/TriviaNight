@@ -77,7 +77,12 @@ fn main() {
             get_all_question_sets,
             get_questions_in_set,
             create_question,
-            create_question_set
+            create_question_set,
+            update_question_set,
+            delete_question_set,
+            delete_question,
+            add_question_to_set,
+            remove_question_from_set
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -339,5 +344,59 @@ fn create_question_set(
     description: String,
 ) -> Result<i64, String> {
     game_engine::create_question_set(&app_state.db_path, &name, &description)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn update_question_set(
+    app_state: State<'_, AppState>,
+    set_id: i64,
+    name: String,
+    description: String,
+) -> Result<(), String> {
+    game_engine::update_question_set(&app_state.db_path, set_id, &name, &description)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn delete_question_set(
+    app_state: State<'_, AppState>,
+    set_id: i64,
+) -> Result<(), String> {
+    game_engine::delete_question_set(&app_state.db_path, set_id)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn delete_question(
+    app_state: State<'_, AppState>,
+    question_id: i64,
+) -> Result<(), String> {
+    game_engine::delete_question(&app_state.db_path, question_id)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn add_question_to_set(
+    app_state: State<'_, AppState>,
+    set_id: i64,
+    question_id: i64,
+) -> Result<(), String> {
+    // Get current max position
+    let questions = game_engine::get_questions_in_set(&app_state.db_path, set_id)
+        .map_err(|e| e.to_string())?;
+    let position = questions.len() as i32;
+
+    game_engine::add_question_to_set(&app_state.db_path, set_id, question_id, position)
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn remove_question_from_set(
+    app_state: State<'_, AppState>,
+    set_id: i64,
+    question_id: i64,
+) -> Result<(), String> {
+    game_engine::remove_question_from_set(&app_state.db_path, set_id, question_id)
         .map_err(|e| e.to_string())
 }

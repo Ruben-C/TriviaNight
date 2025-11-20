@@ -3,7 +3,7 @@ import { invoke } from '@tauri-apps/api/core'
 export interface Question {
   id: number
   question_text: string
-  question_type: 'multiple_choice' | 'text_input' | 'true_false' | 'image_guess'
+  question_type: 'multiple_choice' | 'text_input' | 'true_false' | 'image_guess' | 'first_letter'
   correct_answer: string
   options?: string[]
   image_url?: string
@@ -68,4 +68,39 @@ export async function createQuestion(params: CreateQuestionParams): Promise<numb
  */
 export async function createQuestionSet(name: string, description: string): Promise<number> {
   return await invoke<number>('create_question_set', { name, description })
+}
+
+/**
+ * Update an existing question set
+ */
+export async function updateQuestionSet(setId: number, name: string, description: string): Promise<void> {
+  return await invoke<void>('update_question_set', { setId, name, description })
+}
+
+/**
+ * Delete a question set
+ */
+export async function deleteQuestionSet(setId: number): Promise<void> {
+  return await invoke<void>('delete_question_set', { setId })
+}
+
+/**
+ * Delete a question
+ */
+export async function deleteQuestion(questionId: number): Promise<void> {
+  return await invoke<void>('delete_question', { questionId })
+}
+
+/**
+ * Add a question to a set
+ */
+export async function addQuestionToSet(setId: number, questionId: number): Promise<void> {
+  return await invoke<void>('add_question_to_set', { setId, questionId })
+}
+
+/**
+ * Remove a question from a set
+ */
+export async function removeQuestionFromSet(setId: number, questionId: number): Promise<void> {
+  return await invoke<void>('remove_question_from_set', { setId, questionId })
 }

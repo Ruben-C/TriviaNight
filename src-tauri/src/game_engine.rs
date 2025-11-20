@@ -200,6 +200,77 @@ pub fn add_question_to_set(
     Ok(())
 }
 
+/// Remove a question from a set
+pub fn remove_question_from_set(
+    db_path: &Path,
+    set_id: i64,
+    question_id: i64,
+) -> Result<(), rusqlite::Error> {
+    let conn = Connection::open(db_path)?;
+
+    conn.execute(
+        "DELETE FROM set_questions WHERE set_id = ?1 AND question_id = ?2",
+        (set_id, question_id),
+    )?;
+
+    Ok(())
+}
+
+/// Update a question set
+pub fn update_question_set(
+    db_path: &Path,
+    set_id: i64,
+    name: &str,
+    description: &str,
+) -> Result<(), rusqlite::Error> {
+    let conn = Connection::open(db_path)?;
+
+    conn.execute(
+        "UPDATE question_sets SET name = ?1, description = ?2 WHERE id = ?3",
+        (name, description, set_id),
+    )?;
+
+    Ok(())
+}
+
+/// Delete a question set
+pub fn delete_question_set(db_path: &Path, set_id: i64) -> Result<(), rusqlite::Error> {
+    let conn = Connection::open(db_path)?;
+
+    // Delete from set_questions first (foreign key constraint)
+    conn.execute(
+        "DELETE FROM set_questions WHERE set_id = ?1",
+        [set_id],
+    )?;
+
+    // Delete the set itself
+    conn.execute(
+        "DELETE FROM question_sets WHERE id = ?1",
+        [set_id],
+    )?;
+
+    Ok(())
+}
+
+/// Delete a question
+pub fn delete_question(db_path: &Path, question_id: i64) -> Result<(), rusqlite::Error> {
+    let conn = Connection::open(db_path)?;
+
+    // Delete from set_questions first
+    conn.execute(
+        "DELETE FROM set_questions WHERE question_id = ?1",
+        [question_id],
+    )?;
+
+    // Delete the question itself
+    conn.execute(
+        "DELETE FROM questions WHERE id = ?1",
+        [question_id],
+    )?;
+
+    Ok(())
+}
+
 /// Calculate points for an answer
 pub fn calculate_points(is_correct: bool, time_elapsed: u32, time_limit: u32) -> u32 {
     if !is_correct {
@@ -231,6 +302,17 @@ pub fn check_answer(question: &Question, player_answer: &str) -> bool {
         "text_input" => {
             // Allow some flexibility for text answers
             answer == correct || answer.contains(&correct) || correct.contains(&answer)
+        }
+        "first_letter" => {
+            // Check if the player's answer matches the first letter(s) of the correct answer
+            // Accept both single letter and full answer
+            if answer.len() == 1 {
+                // Single letter answer
+                correct.chars().next().map(|c| c.to_string()) == Some(answer)
+            } else {
+                // Full answer also accepted
+                answer == correct
+            }
         }
         _ => answer == correct,
     }
