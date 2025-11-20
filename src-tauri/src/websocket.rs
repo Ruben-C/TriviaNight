@@ -279,7 +279,8 @@ pub async fn handle_socket(socket: WebSocket, game_state: Arc<RwLock<GameState>>
     }
 
     // Clean up player if they were registered
-    if let Some(id) = player_id.lock().await.as_ref() {
+    let player_id_guard = player_id.lock().await;
+    if let Some(id) = player_id_guard.as_ref() {
         let mut state = game_state.write().await;
         state.remove_player(id);
         println!("❌ Player {} disconnected", id);
