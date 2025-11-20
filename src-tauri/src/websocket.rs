@@ -185,6 +185,9 @@ pub async fn handle_socket(socket: WebSocket, game_state: Arc<RwLock<GameState>>
     // Create channel for this player
     let (tx, mut rx) = mpsc::unbounded_channel::<Message>();
 
+    // Shared player ID for cleanup
+    let player_id = Arc::new(tokio::sync::Mutex::new(None::<String>));
+
     // Spawn task to send messages to this player
     let mut send_task = tokio::spawn(async move {
         while let Some(msg) = rx.recv().await {
@@ -194,11 +197,10 @@ pub async fn handle_socket(socket: WebSocket, game_state: Arc<RwLock<GameState>>
         }
     });
 
-    let mut player_id: Option<String> = None;
-
     // Handle incoming messages
     let mut recv_task = tokio::spawn({
         let game_state = game_state.clone();
+        let player_id = player_id.clone();
         async move {
             while let Some(Ok(msg)) = receiver.next().await {
                 if let Message::Text(text) = msg {
@@ -209,7 +211,7 @@ pub async fn handle_socket(socket: WebSocket, game_state: Arc<RwLock<GameState>>
                             GameMessage::PlayerJoin { name, game_code: _ } => {
                                 // TODO: Validate game code
                                 let id = state.add_player(name.clone(), tx.clone());
-                                player_id = Some(id.clone());
+                                *player_id.lock().await = Some(id.clone());
 
                                 // Send confirmation to player
                                 state
@@ -263,28 +265,23 @@ pub async fn handle_socket(socket: WebSocket, game_state: Arc<RwLock<GameState>>
                     }
                 }
             }
-
-            player_id
         }
     });
 
     // Wait for either task to finish
     tokio::select! {
-        result = &mut send_task => {
+        _ = &mut send_task => {
             recv_task.abort();
-            if let Some(id) = result.ok().flatten() {
-                let mut state = game_state.write().await;
-                state.remove_player(&id);
-                println!("❌ Player {} disconnected", id);
-            }
         }
-        result = &mut recv_task => {
+        _ = &mut recv_task => {
             send_task.abort();
-            if let Some(id) = result.ok().flatten() {
-                let mut state = game_state.write().await;
-                state.remove_player(&id);
-                println!("❌ Player {} disconnected", id);
-            }
         }
+    }
+
+    // Clean up player if they were registered
+    if let Some(id) = player_id.lock().await.as_ref() {
+        let mut state = game_state.write().await;
+        state.remove_player(id);
+        println!("❌ Player {} disconnected", id);
     }
 }
