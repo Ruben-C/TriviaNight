@@ -8,7 +8,7 @@ import {
   type ConnectedPlayer,
   type GameStateInfo,
 } from '../api/game'
-import { getAllQuestions, getAllQuestionSets, getQuestionsInSet, type Question, type QuestionSet } from '../api/questions'
+import { getAllQuestionSets, getQuestionsInSet, type Question, type QuestionSet } from '../api/questions'
 
 export default function GameDashboard() {
   const [players, setPlayers] = useState<ConnectedPlayer[]>([])
